@@ -9,6 +9,7 @@ logger = get_logger(__name__)
 
 orders_bp = Blueprint('orders', __name__, url_prefix='/api')
 
+
 @orders_bp.route('/')
 def home():
     """
@@ -19,6 +20,14 @@ def home():
         "message": "Bem-vindo à API da LovePulseiras",
         "status": "online"
     })
+
+@orders_bp.route('/orders', methods=['OPTIONS'])
+def handle_options():
+    """
+    Rota para lidar com requisições OPTIONS (preflight CORS)
+    """
+    response = current_app.make_default_options_response()
+    return response
 
 @orders_bp.route('/orders', methods=['POST'])
 def create_order():
