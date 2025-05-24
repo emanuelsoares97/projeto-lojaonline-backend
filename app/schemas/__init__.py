@@ -12,7 +12,7 @@ class OrderSchema(Schema):
     date = fields.Str(allow_none=True)
     login_name = fields.Str(allow_none=True)  # Campo para o nome do login
     customer = fields.Str(allow_none=True)
-    customer_email = fields.Email(allow_none=True)
+    customer_email = fields.Str(allow_none=True)
     delivery_address = fields.Str(allow_none=True)
     phone = fields.Str(allow_none=True)
 
