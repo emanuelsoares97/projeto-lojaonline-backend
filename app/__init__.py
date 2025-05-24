@@ -1,6 +1,6 @@
 from flask import Flask
 from flask_cors import CORS
-from app.config import Config
+from config import Config
 
 def create_app(config_class=Config):
     """Função de fábrica da aplicação Flask"""
@@ -11,8 +11,7 @@ def create_app(config_class=Config):
     CORS(app)
     
     # Registro de blueprints
-    from app.routes import orders, contacts
-    app.register_blueprint(orders.bp)
-    app.register_blueprint(contacts.bp)
+    from app.routes import orders_bp
+    app.register_blueprint(orders_bp)
     
     return app 
