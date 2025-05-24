@@ -1,9 +1,20 @@
 services:
   - type: web
-    name: projeto-lojaonline-api
+    name: lovepulseiras-api
     env: python
-    buildCommand: ""
+    buildCommand: pip install -r requirements.txt
     startCommand: gunicorn run:app
     envVars:
+      - key: PYTHON_VERSION
+        value: 3.9.0
+      - key: EMAIL_FROM
+        sync: false
+      - key: EMAIL_TO
+        sync: false
+      - key: EMAIL_PASSWORD
+        sync: false
       - key: FLASK_ENV
-        value: production
+        value: prod
+      - key: SECRET_KEY
+        generateValue: true
+    autoDeploy: true
