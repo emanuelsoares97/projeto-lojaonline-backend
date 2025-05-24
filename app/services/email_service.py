@@ -71,46 +71,46 @@ class EmailService:
         """
 
     @staticmethod
-    def enviar_email_encomenda(encomenda):
+    def send_order_email(order):
         try:
-            if not current_app.config['MAIL_USERNAME'] or not current_app.config['MAIL_PASSWORD']:
+            if not current_app.config['EMAIL_FROM'] or not current_app.config['EMAIL_PASSWORD']:
                 logger.error("Configurações de email não definidas no servidor")
                 raise Exception("Configurações de email não definidas no servidor")
 
             msg = MIMEMultipart()
-            msg['From'] = current_app.config['MAIL_USERNAME']
-            msg['To'] = current_app.config['MAIL_RECEIVER']
+            msg['From'] = current_app.config['EMAIL_FROM']
+            msg['To'] = current_app.config['EMAIL_TO']
             msg['Subject'] = "Nova Encomenda - LovePulseiras"
 
             # Criar o corpo do email
-            corpo = "Nova Encomenda Recebida!\n\n"
-            corpo += f"Data: {encomenda.get('data', 'N/A')}\n"
+            body = "Nova Encomenda Recebida!\n\n"
+            body += f"Data: {order.get('date', 'N/A')}\n"
             
             # Adicionar informações do cliente se disponíveis
-            if encomenda.get('cliente'):
-                corpo += f"Cliente: {encomenda['cliente']}\n"
-            if encomenda.get('email_cliente'):
-                corpo += f"Email do Cliente: {encomenda['email_cliente']}\n"
-            if encomenda.get('morada_entrega'):
-                corpo += f"Morada de Entrega: {encomenda['morada_entrega']}\n"
-            if encomenda.get('telefone'):
-                corpo += f"Telefone: {encomenda['telefone']}\n"
+            if order.get('customer'):
+                body += f"Cliente: {order['customer']}\n"
+            if order.get('customer_email'):
+                body += f"Email do Cliente: {order['customer_email']}\n"
+            if order.get('delivery_address'):
+                body += f"Morada de Entrega: {order['delivery_address']}\n"
+            if order.get('phone'):
+                body += f"Telefone: {order['phone']}\n"
             
-            corpo += "\nItems:\n"
-            for item in encomenda['items']:
-                corpo += f"- {item['nome']} (Quantidade: {item['quantidade']}) - {item['preco']}€\n"
+            body += "\nItems:\n"
+            for item in order['items']:
+                body += f"- {item['name']} (Quantidade: {item['quantity']}) - {item['price']}€\n"
             
-            corpo += f"\nTotal da Encomenda: {encomenda['total']}€"
+            body += f"\nTotal da Encomenda: {order['total']}€"
 
-            msg.attach(MIMEText(corpo, 'plain'))
+            msg.attach(MIMEText(body, 'plain'))
 
-            logger.info(f"Preparando para enviar email para {current_app.config['MAIL_RECEIVER']}")
+            logger.info(f"Preparando para enviar email para {current_app.config['EMAIL_TO']}")
 
-            with smtplib.SMTP(current_app.config['MAIL_SERVER'], current_app.config['MAIL_PORT']) as server:
+            with smtplib.SMTP('smtp.gmail.com', 587) as server:
                 server.starttls()
                 server.login(
-                    current_app.config['MAIL_USERNAME'],
-                    current_app.config['MAIL_PASSWORD']
+                    current_app.config['EMAIL_FROM'],
+                    current_app.config['EMAIL_PASSWORD']
                 )
                 server.send_message(msg)
                 logger.info("Email enviado com sucesso")
