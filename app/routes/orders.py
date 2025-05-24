@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, current_app
 from datetime import datetime
 from app.schemas import OrderSchema
 from app.services.email_service import EmailService
@@ -26,6 +26,10 @@ def create_order():
     Processa uma nova encomenda e envia email de notificação
     """
     try:
+        # Log das configurações de email (sem a senha)
+        logger.info(f"Email From: {current_app.config.get('EMAIL_FROM')}")
+        logger.info(f"Email To: {current_app.config.get('EMAIL_TO')}")
+        
         # Validar dados da encomenda
         schema = OrderSchema()
         data = request.get_json()
@@ -39,31 +43,38 @@ def create_order():
         
         logger.debug(f"Dados recebidos: {data}")
         
-        # Validar e deserializar dados
-        order = schema.load(data)
-        logger.info("Dados da encomenda validados com sucesso")
+        try:
+            # Validar e deserializar dados
+            order = schema.load(data)
+            logger.info("Dados da encomenda validados com sucesso")
+        except ValidationError as err:
+            logger.error(f"Erro de validação: {err.messages}")
+            return jsonify({
+                "message": "Erro de validação dos dados",
+                "status": "error",
+                "errors": err.messages
+            }), 400
         
         # Adicionar data se não fornecida
         if not order.get('date'):
             order['date'] = datetime.now().strftime("%Y-%m-%d")
         
-        # Enviar email
-        EmailService.send_order_email(order)
-        logger.info("Encomenda processada e email enviado com sucesso")
+        try:
+            # Enviar email
+            EmailService.send_order_email(order)
+            logger.info("Encomenda processada e email enviado com sucesso")
+        except Exception as email_error:
+            logger.error(f"Erro ao enviar email: {str(email_error)}")
+            return jsonify({
+                "message": f"Erro ao enviar email: {str(email_error)}",
+                "status": "error"
+            }), 500
         
         return jsonify({
             "message": "Encomenda processada com sucesso!",
             "status": "success",
             "data": order
         })
-        
-    except ValidationError as err:
-        logger.error(f"Erro de validação: {err.messages}")
-        return jsonify({
-            "message": "Erro de validação dos dados",
-            "status": "error",
-            "errors": err.messages
-        }), 400
         
     except Exception as e:
         logger.error(f"Erro ao processar encomenda: {str(e)}")
