@@ -15,6 +15,9 @@ def create_app():
     
     # Registro de blueprints
     from app.routes import orders_bp
+    from app.routes.contacts import contacts_bp
+    
     app.register_blueprint(orders_bp)
+    app.register_blueprint(contacts_bp)
     
     return app 
