@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, jsonify
 from flask_cors import CORS
 from config import get_config
 
@@ -16,6 +16,14 @@ def create_app():
     "methods": ["GET", "POST", "OPTIONS"],
     "allow_headers": ["Content-Type", "Accept"]
 }})
+    
+    # Rota raiz para verificar se a API está funcionando
+    @app.route('/')
+    def index():
+        return jsonify({
+            "status": "success",
+            "message": "API Love Pulseiras está online!"
+        })
     
     # Registro de blueprints
     from app.routes import orders_bp
