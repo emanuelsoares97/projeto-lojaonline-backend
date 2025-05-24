@@ -1,26 +1,73 @@
-from flask import Blueprint, request, jsonify
-from app.schemas.order_schema import OrderSchema
+from flask import Blueprint, jsonify, request
+from datetime import datetime
+from app.schemas import OrderSchema
 from app.services.email_service import EmailService
+from marshmallow import ValidationError
+from app.utils.logger_utils import get_logger
 
-bp = Blueprint('orders', __name__)
+logger = get_logger(__name__)
 
-@bp.route('/api/orders', methods=['POST'])
+orders_bp = Blueprint('orders', __name__)
+
+@orders_bp.route('/')
+def home():
+    """
+    Rota raiz para verificar se a API está funcionando
+    """
+    logger.info("Acesso à rota raiz")
+    return jsonify({
+        "message": "Bem-vindo à API da LovePulseiras",
+        "status": "online"
+    })
+
+@orders_bp.route('/create-order', methods=['POST'])
 def create_order():
-    """Rota para processar novas encomendas"""
+    """
+    Processa uma nova encomenda e envia email de notificação
+    """
     try:
-        data = request.json
+        # Validar dados da encomenda
+        schema = OrderSchema()
+        data = request.get_json()
         
-        # Validação dos dados
-        OrderSchema.validate(data)
+        if not data:
+            logger.warning("Requisição recebida sem dados")
+            return jsonify({
+                "message": "Dados da encomenda não fornecidos",
+                "status": "error"
+            }), 400
         
-        # Formata e envia o email
-        email_body = EmailService.format_order_email(data)
-        if EmailService.send_email("Nova Encomenda - LovePulseiras", email_body):
-            return jsonify({"message": "Encomenda recebida com sucesso!"}), 200
-        else:
-            return jsonify({"message": "Erro ao processar encomenda"}), 500
-
-    except ValueError as e:
-        return jsonify({"message": str(e)}), 400
+        logger.debug(f"Dados recebidos: {data}")
+        
+        # Validar e deserializar dados
+        order = schema.load(data)
+        logger.info("Dados da encomenda validados com sucesso")
+        
+        # Adicionar data se não fornecida
+        if not order.get('date'):
+            order['date'] = datetime.now().strftime("%Y-%m-%d")
+        
+        # Enviar email
+        EmailService.send_order_email(order)
+        logger.info("Encomenda processada e email enviado com sucesso")
+        
+        return jsonify({
+            "message": "Encomenda processada com sucesso!",
+            "status": "success",
+            "data": order
+        })
+        
+    except ValidationError as err:
+        logger.error(f"Erro de validação: {err.messages}")
+        return jsonify({
+            "message": "Erro de validação dos dados",
+            "status": "error",
+            "errors": err.messages
+        }), 400
+        
     except Exception as e:
-        return jsonify({"message": f"Erro: {str(e)}"}), 500 
+        logger.error(f"Erro ao processar encomenda: {str(e)}")
+        return jsonify({
+            "message": str(e),
+            "status": "error"
+        }), 500 
