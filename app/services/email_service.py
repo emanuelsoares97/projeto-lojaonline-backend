@@ -4,6 +4,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from flask import current_app
 from app.utils.logger_utils import get_logger
+import traceback
 
 logger = get_logger(__name__)
 
@@ -14,6 +15,12 @@ class EmailService:
     def send_order_email(order):
         """Envia email de notificação de nova encomenda"""
         try:
+            # Log detalhado das configurações
+            logger.info("Verificando configurações de email...")
+            logger.info(f"EMAIL_FROM configurado: {'Sim' if current_app.config.get('EMAIL_FROM') else 'Não'}")
+            logger.info(f"EMAIL_TO configurado: {'Sim' if current_app.config.get('EMAIL_TO') else 'Não'}")
+            logger.info(f"EMAIL_PASSWORD configurado: {'Sim' if current_app.config.get('EMAIL_PASSWORD') else 'Não'}")
+            
             if not current_app.config.get('EMAIL_FROM') or not current_app.config.get('EMAIL_PASSWORD'):
                 logger.error("Configurações de email não definidas no servidor")
                 raise Exception("Configurações de email não definidas no servidor")
@@ -58,16 +65,25 @@ class EmailService:
 
             logger.info(f"Preparando para enviar email para {current_app.config['EMAIL_TO']}")
 
-            with smtplib.SMTP('smtp.gmail.com', 587) as server:
-                server.starttls()
-                server.login(
-                    current_app.config['EMAIL_FROM'],
-                    current_app.config['EMAIL_PASSWORD']
-                )
-                server.send_message(msg)
-                logger.info("Email enviado com sucesso")
+            try:
+                with smtplib.SMTP('smtp.gmail.com', 587) as server:
+                    logger.info("Conectando ao servidor SMTP...")
+                    server.starttls()
+                    logger.info("Iniciando login...")
+                    server.login(
+                        current_app.config['EMAIL_FROM'],
+                        current_app.config['EMAIL_PASSWORD']
+                    )
+                    logger.info("Login bem sucedido, enviando email...")
+                    server.send_message(msg)
+                    logger.info("Email enviado com sucesso")
+            except Exception as smtp_error:
+                logger.error(f"Erro SMTP detalhado: {str(smtp_error)}")
+                logger.error(f"Traceback: {traceback.format_exc()}")
+                raise
 
         except Exception as e:
             error_msg = f"Erro ao enviar email: {str(e)}"
             logger.error(error_msg)
+            logger.error(f"Traceback completo: {traceback.format_exc()}")
             raise Exception(error_msg) 
