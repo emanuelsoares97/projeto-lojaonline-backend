@@ -7,7 +7,7 @@ from app.utils.logger_utils import get_logger
 
 logger = get_logger(__name__)
 
-orders_bp = Blueprint('orders', __name__)
+orders_bp = Blueprint('orders', __name__, url_prefix='/api')
 
 @orders_bp.route('/')
 def home():
@@ -20,7 +20,7 @@ def home():
         "status": "online"
     })
 
-@orders_bp.route('/create-order', methods=['POST'])
+@orders_bp.route('/orders', methods=['POST'])
 def create_order():
     """
     Processa uma nova encomenda e envia email de notificação
