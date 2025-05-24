@@ -46,8 +46,12 @@ class EmailService:
             <p><strong>Data:</strong> {order.get('date', 'N/A')}</p>
             """
 
-            if order.get('customer'):
+            # Usar o nome do login se disponível
+            if order.get('login_name'):
+                body += f"<p><strong>Cliente:</strong> {order['login_name']}</p>"
+            elif order.get('customer'):  # fallback para o nome do cliente se login_name não estiver disponível
                 body += f"<p><strong>Cliente:</strong> {order['customer']}</p>"
+
             if order.get('customer_email'):
                 body += f"<p><strong>Email do Cliente:</strong> {order['customer_email']}</p>"
             if order.get('delivery_address'):
@@ -62,6 +66,52 @@ class EmailService:
             """
 
             msg.attach(MIMEText(body, 'html'))
+
+            logger.info(f"Preparando para enviar email para {current_app.config['EMAIL_TO']}")
+
+            try:
+                with smtplib.SMTP('smtp.gmail.com', 587) as server:
+                    logger.info("Conectando ao servidor SMTP...")
+                    server.starttls()
+                    logger.info("Iniciando login...")
+                    server.login(
+                        current_app.config['EMAIL_FROM'],
+                        current_app.config['EMAIL_PASSWORD']
+                    )
+                    logger.info("Login bem sucedido, enviando email...")
+                    server.send_message(msg)
+                    logger.info("Email enviado com sucesso")
+            except Exception as smtp_error:
+                logger.error(f"Erro SMTP detalhado: {str(smtp_error)}")
+                logger.error(f"Traceback: {traceback.format_exc()}")
+                raise
+
+        except Exception as e:
+            error_msg = f"Erro ao enviar email: {str(e)}"
+            logger.error(error_msg)
+            logger.error(f"Traceback completo: {traceback.format_exc()}")
+            raise Exception(error_msg)
+
+    @staticmethod
+    def send_contact_email(msg_data):
+        """Envia email de notificação de nova mensagem de contato"""
+        try:
+            # Log detalhado das configurações
+            logger.info("Verificando configurações de email...")
+            logger.info(f"EMAIL_FROM configurado: {'Sim' if current_app.config.get('EMAIL_FROM') else 'Não'}")
+            logger.info(f"EMAIL_TO configurado: {'Sim' if current_app.config.get('EMAIL_TO') else 'Não'}")
+            logger.info(f"EMAIL_PASSWORD configurado: {'Sim' if current_app.config.get('EMAIL_PASSWORD') else 'Não'}")
+            
+            if not current_app.config.get('EMAIL_FROM') or not current_app.config.get('EMAIL_PASSWORD'):
+                logger.error("Configurações de email não definidas no servidor")
+                raise Exception("Configurações de email não definidas no servidor")
+
+            msg = MIMEMultipart()
+            msg['From'] = current_app.config['EMAIL_FROM']
+            msg['To'] = current_app.config['EMAIL_TO']
+            msg['Subject'] = msg_data['subject']
+
+            msg.attach(MIMEText(msg_data['body'], 'html'))
 
             logger.info(f"Preparando para enviar email para {current_app.config['EMAIL_TO']}")
 
