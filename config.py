@@ -3,12 +3,9 @@ from decouple import config
 
 class Config:
     SECRET_KEY = config('SECRET_KEY', default='your-secret-key-here')
-    MAIL_SERVER = 'smtp.gmail.com'
-    MAIL_PORT = 587
-    MAIL_USE_TLS = True
-    MAIL_USERNAME = config('EMAIL_FROM')
-    MAIL_PASSWORD = config('EMAIL_PASSWORD')
-    MAIL_RECEIVER = config('EMAIL_TO')
+    EMAIL_FROM = config('EMAIL_FROM')
+    EMAIL_PASSWORD = config('EMAIL_PASSWORD')
+    EMAIL_TO = config('EMAIL_TO')
 
 class DevelopmentConfig(Config):
     DEBUG = True
