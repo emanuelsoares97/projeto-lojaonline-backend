@@ -11,7 +11,11 @@ def create_app():
     app.config.from_object(config_class)
     
     # Inicialização de extensões
-    CORS(app, resources={r"/*": {"origins": "*"}})
+    CORS(app, resources={r"/*": {
+    "origins": "*",
+    "methods": ["GET", "POST", "OPTIONS"],
+    "allow_headers": ["Content-Type", "Accept"]
+}})
     
     # Registro de blueprints
     from app.routes import orders_bp
