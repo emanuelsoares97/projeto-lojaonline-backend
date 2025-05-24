@@ -46,7 +46,6 @@ class EmailService:
             <p><strong>Data:</strong> {order.get('date', 'N/A')}</p>
             """
 
-            # Usar o nome do login se disponível
             if order.get('login_name'):
                 body += f"<p><strong>Cliente:</strong> {order['login_name']}</p>"
             elif order.get('customer'):
