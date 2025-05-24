@@ -49,10 +49,8 @@ class EmailService:
             # Usar o nome do login se disponível
             if order.get('login_name'):
                 body += f"<p><strong>Cliente:</strong> {order['login_name']}</p>"
-            elif order.get('customer'):  # fallback para o nome do cliente se login_name não estiver disponível
+            elif order.get('customer'):
                 body += f"<p><strong>Cliente:</strong> {order['customer']}</p>"
-            if order.get('delivery_address'):
-                body += f"<p><strong>Morada de Entrega:</strong> {order['delivery_address']}</p>"
             if order.get('phone'):
                 body += f"<p><strong>Telefone:</strong> {order['phone']}</p>"
 
